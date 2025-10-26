@@ -1,4 +1,4 @@
-Flask
-gunicorn
-deepface
-tf-keras
+flask
+numpy
+Pillow
+face_recognition
