@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Surprise...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Shared fonts */
+        body, html {
+            font-family: 'Lato', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        /* Magical Animated Gradient Background (Used by both UIs) */
+        body {
+            background: linear-gradient(-45deg, #fce7f3, #e9d5ff, #fbcfe8, #fce7f3);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- 1. Scanner UI Styles --- */
+        #scanner-ui {
+            transition: opacity 0.5s ease-out;
+        }
+        #webcam-feed {
+            border-radius: 1.5rem; /* Rounded corners for the video */
+            transform: scaleX(-1); /* Flip horizontally (mirror mode) */
+            object-fit: cover;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .scan-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .scan-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        /* --- 2. Loading Overlay Styles --- */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        #loading-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #f472b6; /* Pink */
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- 3. Success Story UI Styles --- */
+        #success-ui {
+            cursor: pointer;
+        }
+        
+        .fade-element {
+            opacity: 0;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, calc(-50% + 20px)); /* Initial state */
+            width: 90%;
+            max-width: 48rem; /* Keeps it from being too wide */
+            text-align: center; /* Explicitly center text */
+        }
+
+        .fade-element.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%); /* Final state */
+        }
+        /* All your other amazing animations (sparkle, pulse, etc.) */
+        .sparkle-anim { display: inline-block; animation: sparkle 1.5s infinite; }
+        @keyframes sparkle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
+        .pulse-anim { display: inline-block; animation: pulse 2s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+        .glow-anim { display: inline-block; animation: glow 2s infinite ease-in-out; }
+        @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fef08a; } 50% { text-shadow: 0 0 20px #fff, 0 0 30px #fef08a, 0 0 40px #fde047; } }
+        .shiny-text { background: linear-gradient(90deg, #fde047, #fef9c3, #fde047, #fef9c3); background-size: 200% auto; color: #000; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer-text 2.5s linear infinite; }
+        @keyframes shimmer-text { 0% { background-position: 200% center; } 100% { background-position: 0% center; } }
+        .interstitial-icon { font-size: 12rem; line-height: 1; display: inline-block; }
+        .big-pulse { animation: bigPulse 1.2s ease-out; }
+        @keyframes bigPulse { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+        .ribbon-twirl { animation: twirl 1.2s ease-out; }
+        @keyframes twirl { 0% { transform: scale(0) rotate(-360deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        .rainbow-shimmer { animation: shimmer 1.5s; }
+        @keyframes shimmer { 0%, 100% { filter: brightness(1) saturate(1); } 50% { filter: brightness(1.5) saturate(1.5); } }
+        .confetti-shake { animation: shake 0.8s; }
+        @keyframes shake { 0% { transform: translate(0, 0) rotate(0deg); } 20% { transform: translate(-5px, 5px) rotate(-5deg); } 40% { transform: translate(5px, -5px) rotate(5deg); } 60% { transform: translate(-5px, 5px) rotate(-3deg); } 80% { transform: translate(5px, -5px) rotate(3deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+        .blinking-eyes { animation: blink 1.5s; }
+        @keyframes blink { 0%, 50%, 100% { transform: scaleY(1); } 25%, 75% { transform: scaleY(0.1); } }
+        .shooting-star { animation: shoot 1.2s ease-in; }
+        @keyframes shoot { 0% { transform: translate(150px, -150px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translate(-150px, 150px); opacity: 0; } }
+        .candle-flicker { animation: flicker-light 1.5s; }
+        @keyframes flicker-light { 0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px #fca5a5; } 50% { text-shadow: 0 0 20px #fff, 0 0 30px #f87171, 0 0 40px #ef4444; } }
+    </style>
+</head>
+<body class="text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div id="scanner-ui" class="w-full max-w-lg text-center">
+        <h1 class="font-serif text-5xl font-bold mb-4 text-pink-900">A V.I.P. Surprise</h1>
+        <p class="text-xl mb-6 text-pink-700">This is for Preethi's eyes only! <br> Please verify your identity.</p>
+        
+        <video id="webcam-feed" width="640" height="480" autoplay muted playsinline class="w-full h-auto mx-auto mb-6"></video>
+        
+        <button id="scan-button" class="scan-button text-2xl font-bold text-white bg-pink-500 py-4 px-8 rounded-full shadow-lg hover:bg-pink-600">
+            Verify My Identity ✨
+        </button>
+
+        <p id="webcam-error" class="text-red-600 mt-4"></p>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-6"></div>
+            <h2 id="loading-text" class="text-3xl font-serif font-bold text-pink-800">Aligning the stars...</h2>
+        </div>
+    </div>
+
+    <div id="success-ui" class="hidden fixed inset-0">
+        </div>
+
+
+    <script>
+        // --- Get all our HTML elements ---
+        const scannerUI = document.getElementById('scanner-ui');
+        const successUI = document.getElementById('success-ui');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const scanButton = document.getElementById('scan-button');
+        const videoElement = document.getElementById('webcam-feed');
+        const webcamError = document.getElementById('webcam-error');
+        
+        let videoStream = null;
+
+        // --- Creative Loading Messages ---
+        const loadingMessages = [
+            "Aligning the stars...",
+            "Scanning for magic...",
+            "Cross-referencing the V.I.P. list...",
+            "Is that... is that you? ✨",
+            "Just one moment..."
+        ];
+        let messageInterval = null;
+
+        // --- 1. Start the Webcam ---
+        async function startWebcam() {
+            try {
+                videoElement.setAttribute('playsinline', '');
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                videoElement.srcObject = videoStream;
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                webcamError.textContent = "Error: Could not access webcam. Please allow permission and refresh.";
+                scanButton.disabled = true;
+                scanButton.style.opacity = 0.5;
+            }
+        }
+
+        // --- 2. Scan Face (The Main Function) ---
+        async function scanFace() {
+            
+            // Unlock audio context on the *first* user click
+            try {
+                await Tone.start();
+                console.log("Audio context started!");
+            } catch (e) {
+                console.error("Tone.start failed:", e);
+            }
+            
+            // A. Show the magical loading overlay
+            loadingOverlay.classList.add('visible');
+            let msgIndex = 0;
+            loadingText.textContent = loadingMessages[msgIndex];
+            messageInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.textContent = loadingMessages[msgIndex];
+            }, 2000);
+
+            // B. Capture a frame (mirrored)
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            
+            // D. Send to our *own* server
+            const formData = new FormData();
+            formData.append('image', blob, 'webcam_capture.jpg');
+
+            try {
+                // Fetch from the relative path '/verify'
+                const response = await fetch('/verify', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    console.log("Authentication Successful!");
+                    videoStream.getTracks().forEach(track => track.stop());
+                    clearInterval(messageInterval);
+                    scannerUI.style.opacity = 0;
+                    loadingOverlay.classList.remove('visible');
+                    
+                    setTimeout(() => {
+                        scannerUI.classList.add('hidden');
+                        successUI.classList.remove('hidden'); // This removes display:none
+                        initSuccessStory(); // Start the 10-page story
+                    }, 500);
+
+                } else {
+                    // FAILURE!
+                    console.log("Authentication Failed. Reason:", result.error || "No match");
+                    videoStream.getTracks().forEach(track => track.stop());
+                    
+                    // Redirect to the relative path '/taunting'
+                    window.location.href = '/taunting';
+                }
+
+            // ==========================================================
+            // *** THE BUG FIX IS HERE ***
+            // Changed "catch (.err)" to "catch (err)"
+            // ==========================================================
+            } catch (err) {
+                console.error("API Error:", err);
+                clearInterval(messageInterval);
+                loadingOverlay.classList.remove('visible');
+                webcamError.textContent = "Error: Server connection failed. (Is the 'app.py' script running?)";
+            }
+        }
+
+        // --- 3. Initialize the 10-Page Success Story ---
+        function initSuccessStory() {
+            let audioReady = false;
+            const music = {};
+            
+            function setupAudio() {
+                try {
+                    music.surpriseSynth = new Tone.FMSynth({ harmonicity: 8, modulationIndex: 2, envelope: { attack: 0.01, decay: 2, sustain: 0, release: 0.5 } }).toDestination();
+                    const loopSynth = new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.5 } }).toDestination();
+                    loopSynth.volume.value = -12;
+                    music.loopSeq = new Tone.Sequence((time, note) => { loopSynth.triggerAttackRelease(note, "8n", time); }, ["C4", "G4", "A4", "E4"], "1n");
+                    music.loopSeq.loop = true;
+                    const birthdaySynth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 0.5 } }).toDestination();
+                    birthdaySynth.volume.value = -6;
+                    
+                    // ==========================================================
+                    // *** THE AUDIO BUG FIX IS HERE ***
+                    // The "44n" typos are now corrected to "4n"
+                    // ==========================================================
+                    const birthdaySong = [
+                        { time: "0:0", note: "C4", dur: "8n" }, { time: "0:0:2", note: "C4", dur: "8n" }, { time: "0:1", note: "D4", dur: "4n" }, { time: "0:2", note: "C4", dur: "4n" }, { time: "0:3", note: "F4", dur: "4n" }, { time: "1:0", note: "E4", dur: "2n" },
+                        { time: "1:2", note: "C4", dur: "8n" }, { time: "1:2:2", note: "C4", dur: "8n" }, { time: "1:3", note: "D4", dur: "4n" }, { time: "2:0", note: "C4", dur: "4n" }, { time: "2:1", note: "G4", dur: "4n" }, { time: "2:2", note: "F4", dur: "2n" },
+                        { time: "3:0", note: "C4", dur: "8n" }, { time: "3:0:2", note: "C4", dur: "8n" }, { time: "3:1", note: "C5", dur: "4n" }, { time: "3:2", note: "A4", dur: "4n" }, { time: "4:0", note: "F4", dur: "4n" }, { time: "4:1", note: "E4", dur: "4n" }, { time: "4:2", note: "D4", dur: "2n" },
+                        { time: "5:0", note: "Bb4", dur: "8n" }, { time: "5:0:2", note: "Bb4", dur: "8n" }, { time: "5:1", note: "A4", dur: "4n" }, { time: "5:2", note: "F4", dur: "4n" }, { time: "6:0", note: "G4", dur: "4n" }, { time: "6:1", note: "F4", dur: "2n" }
+                    ];
+
+                    music.birthdayPart = new Tone.Part((time, value) => { birthdaySynth.triggerAttackRelease(value.note, value.dur, time); }, birthdaySong);
+                    music.birthdayPart.loop = false;
+                    audioReady = true; // This will now be reached!
+                } catch (e) {
+                    console.error("Error setting up audio:", e);
+                    // This catch block will show the error in the console.
+                }
+            }
+
+            // ==========================================================
+            // *** STORY UPDATE: The 10-page story is now 15 pages! ***
+            // ==========================================================
+            const pages = [
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">Hey there, sleepyhead <span class="sparkle-anim">🌞</span></h1><p class="text-2xl md:text-3xl font-light">A little surprise is waiting for you!</p></div>`, interstitialContent: null },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">Good Morning, Preethi <span class="pulse-anim">❤</span></h1><p class="text-2xl md:text-3xl font-light">Someone’s been waiting for this day for so long…</p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon big-pulse">❤</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">Let’s go on a small countdown journey <span class="pulse-anim">🎀</span></h1><p class="text-2xl md:text-3xl font-light">Tap to start your magical day →</p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon ribbon-twirl">🎀</span></div>` },
+                
+                // --- Start of Split Countdown ---
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">10…</h1><p class="text-2xl md:text-3xl font-light mb-2">Every smile of yours lights up someone’s world <span class="sparkle-anim">🌈</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon rainbow-shimmer">🌈</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">9…</h1><p class="text-2xl md:text-3xl font-light">Every word you say feels like sunshine <span class="glow-anim">☀</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon glow-anim" style="font-size: 12rem;">☀</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">8…</h1><p class="text-2xl md:text-3xl font-light mb-2">Every laugh of yours spreads happiness <span class="pulse-anim">💕</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon pulse-anim" style="font-size: 12rem;">💕</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">7…</h1><p class="text-2xl md:text-3xl font-light">Every day with you feels like a festival <span class="confetti-shake">🎉</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon confetti-shake">🎉</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">6…</h1><p class="text-2xl md:text-3xl font-light mb-2">You make ordinary moments sparkle <span class="sparkle-anim">✨</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon sparkle-anim" style="font-size: 12rem;">✨</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">5…</h1><p class="text-2xl md:text-3xl font-light">You are one in a million, Preethi <span class="pulse-anim">💖</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon big-pulse">💖</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">4…</h1><p class="text-2xl md:text-3xl font-light mb-2">Guess what’s so special about today?</p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon blinking-eyes">👀</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">3…</h1><p class="text-2xl md:text-3xl font-light">Check the calendar carefully <span class="blinking-eyes">👀</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon ribbon-twirl" style="font-size: 12rem;">🗓</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">2…</h1><p class="text-2xl md:text-3xl font-light mb-2">Yes! It’s 27·10·2025 <span class="pulse-anim">🗓</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon pulse-anim" style="font-size: 12rem;">🗓</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">1…</h1><p class="text-2xl md:text-3xl font-light">The day a star was born <span class="sparkle-anim">🌟</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon shooting-star">🌟</span></div>` },
+                // --- End of Split Countdown ---
+
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4"><span class="shiny-text">Happy 20th Birthday, Preethi</span> <span class="pulse-anim">💖</span>🎂🎈</h1><p class="text-2xl md:text-3xl font-light">You deserve endless joy, hugs, and love you today and always <span class="sparkle-anim">💫</span></p></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon candle-flicker">🎂</span></div>` },
+                { pageContent: `<div class="fade-element message-content"><h1 class="font-serif text-5xl md:text-7xl font-bold mb-4">May this year bring...</h1><p class="text-2xl md:text-3xl font-light mb-6">new adventures, pure smiles, and dreams that shine brighter than ever <span class="sparkle-anim">✨</span>💐</p><p class="text-6xl mb-6 glow-anim">🎁</p><h2 class="font-serif text-4xl md:text-5xl font-bold text-pink-600">Love you & Happiest Birthday My love <span class="pulse-anim">🌙💞</span></h2></div>`, interstitialContent: `<div class="fade-element interstitial-content"><span class="interstitial-icon glow-anim" style="font-size: 12rem;">🎁</span></div>` }
+            ];
+
+            let currentPage = -1;
+            const container = document.getElementById('success-ui'); 
+            let isTransitioning = false; 
+
+            function showPage(pageIndex) {
+                if (isTransitioning || pageIndex >= pages.length) {
+                    if(pageIndex >= pages.length) currentPage = pages.length - 1;
+                    return;
+                }
+                isTransitioning = true;
+                const pageData = pages[pageIndex];
+                const currentContent = container.querySelector('.fade-element');
+                if (currentContent) {
+                    currentContent.classList.remove('visible');
+                }
+                setTimeout(() => {
+                    if (pageData.interstitialContent) {
+                        container.innerHTML = pageData.interstitialContent;
+                        const interstitial = container.querySelector('.fade-element');
+                        if (interstitial) { void interstitial.offsetWidth; interstitial.classList.add('visible'); }
+                        setTimeout(() => {
+                            if (interstitial) { interstitial.classList.remove('visible'); }
+                            setTimeout(() => { showMainPageContent(pageData.pageContent, pageIndex); }, 800); 
+                        }, 1500); 
+                    } else {
+                        showMainPageContent(pageData.pageContent, pageIndex);
+                    }
+                }, 800);
+            }
+            
+            function showMainPageContent(content, pageIndex) {
+                container.innerHTML = content;
+                const newMessage = container.querySelector('.fade-element');
+                if (newMessage) { void newMessage.offsetWidth; newMessage.classList.add('visible'); }
+                isTransitioning = false;
+                
+                // This code runs *after* the page is shown
+                if (audioReady) {
+                    // ==========================================================
+                    // *** AUDIO TRIGGER FIX ***
+                    // Page 2 is now the "countdown journey" page
+                    // Page 13 is now the "Happy Birthday" page
+                    // ==========================================================
+                    if (pageIndex === 2) { 
+                        console.log("Page 2: Starting loop music");
+                        Tone.Transport.start(); 
+                        music.loopSeq.start(0); 
+                    }
+                    if (pageIndex === 13) { 
+                        console.log("Page 13: Playing Birthday Song");
+                        music.loopSeq.stop(); 
+                        music.birthdayPart.start(Tone.now() + 0.5); 
+                    }
+                }
+            }
+            
+            // This click listener is for the SUCCESS story
+            successUI.addEventListener('click', () => {
+                // On the first click of the story, set up the audio.
+                if (!audioReady) {
+                    setupAudio(); 
+                    // If setupAudio failed, audioReady will still be false,
+                    // but we won't crash. Let's assume it worked...
+                    if(audioReady) {
+                        console.log("Audio setup complete. Playing sounds.");
+                        const now = Tone.now();
+                        music.surpriseSynth.triggerAttackRelease("C4", "8n", now);
+                        music.surpriseSynth.triggerAttackRelease("E4", "8n", now + 0.2);
+                        music.surpriseSynth.triggerAttackRelease("G4", "8n", now + 0.4);
+                        music.surpriseSynth.triggerAttackRelease("C5", "8n", now + 0.6);
+                    } else {
+                        console.log("Audio setup failed. See error above.");
+                    }
+                }
+                // This part will now be reached!
+                if (!isTransitioning) {
+                    console.log("Click detected, advancing page.");
+                    currentPage++;
+                    showPage(currentPage);
+                }
+            });
+
+            // Show the very first page on load
+            showPage(0);
+            currentPage = 0;
+        }
+
+        // --- 4. Add click listener to the scan button ---
+        scanButton.addEventListener('click', scanFace);
+        
+        // --- 5. Start the webcam when the page loads ---
+        startWebcam();
+
+    </script>
+</body>
+</html>

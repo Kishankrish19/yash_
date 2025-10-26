@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* A simple flicker animation for the "hacker" feel */
+        .flicker {
+            animation: flicker 1.5s infinite alternate;
+        }
+        @keyframes flicker {
+            0%, 100% {
+                opacity: 1;
+                /* Red glow */
+                text-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+            }
+            50% {
+                opacity: 0.7;
+                text-shadow: 0 0 10px #ef4444;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-300 flex items-center justify-center min-h-screen p-4 text-center">
+    
+    <div class="w-full max-w-lg">
+        <h1 class="text-6xl font-bold text-red-500 font-mono flicker mb-8">
+            [ ACCESS DENIED ]
+        </h1>
+        
+        <p class="text-3xl font-light mb-6">
+            Nice try, but you're not her.
+        </p>
+        
+        <p class="text-6xl mb-8">
+            🧐
+        </p>
+        
+        <p class="text-lg text-gray-500">
+            This little project is for someone very special.
+            <br>
+            (And that's not you, buddy.)
+        </p>
+    </div>
+
+</body>
+</html> 
